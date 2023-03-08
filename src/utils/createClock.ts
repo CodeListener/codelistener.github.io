@@ -1,18 +1,22 @@
-import { Options } from "../hooks/useExoplanetClock";
-
-const KEDU_HOUR = 24;
-const KEDU_MINUTE = 90;
-
 function fullZero(v: number) {
   return `${v}`.padStart(2, "0");
 }
-export default function createClock(title: string, width: number, height: number, radius: number) {
+
+type Options = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+export default function createClock(title: string, width: number, height: number, radius: number, graduation: Graduation) {
   const CIRCLE = 2 * Math.PI;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d")!;
-  function draw(timeInfo: Required<Options>) {
+  function draw(timeInfo: Options) {
     ctx.save();
     ctx.clearRect(0, 0, width, height);
     ctx.font = "20px sans-serif";
@@ -37,12 +41,12 @@ export default function createClock(title: string, width: number, height: number
     ctx.fill();
     ctx.closePath();
 
-    const hour = timeInfo.hour % KEDU_HOUR;
+    const hour = timeInfo.hour % graduation.hour;
     const minutes = timeInfo.minute;
     const seconds = timeInfo.second;
 
     // 时针
-    ctx.rotate((CIRCLE / KEDU_HOUR) * hour + (CIRCLE / KEDU_HOUR) * (minutes / KEDU_MINUTE) - Math.PI / 2);
+    ctx.rotate((CIRCLE / graduation.hour) * hour + (CIRCLE / graduation.hour) * (minutes / graduation.minute) - Math.PI / 2);
 
     ctx.beginPath();
     ctx.moveTo(-10, 0);
@@ -54,7 +58,7 @@ export default function createClock(title: string, width: number, height: number
     ctx.save();
 
     // 分针
-    ctx.rotate((CIRCLE / KEDU_MINUTE) * minutes + (CIRCLE / KEDU_MINUTE) * (seconds / KEDU_MINUTE) - Math.PI / 2);
+    ctx.rotate((CIRCLE / graduation.minute) * minutes + (CIRCLE / graduation.minute) * (seconds / graduation.minute) - Math.PI / 2);
     ctx.beginPath();
     ctx.moveTo(-10, 0);
     ctx.lineTo(radius * 0.6, 0);
@@ -66,7 +70,7 @@ export default function createClock(title: string, width: number, height: number
     ctx.save();
 
     // 秒针
-    ctx.rotate((CIRCLE / KEDU_MINUTE) * seconds - Math.PI / 2);
+    ctx.rotate((CIRCLE / graduation.minute) * seconds - Math.PI / 2);
     ctx.beginPath();
     ctx.moveTo(-10, 0);
     ctx.lineTo(radius * 0.8, 0);
@@ -78,8 +82,8 @@ export default function createClock(title: string, width: number, height: number
     ctx.save();
 
     ctx.lineWidth = 1;
-    for (let i = 0; i < KEDU_MINUTE; i++) {
-      ctx.rotate((CIRCLE / KEDU_MINUTE) * i - Math.PI / 2);
+    for (let i = 0; i < graduation.minute; i++) {
+      ctx.rotate((CIRCLE / graduation.minute) * i - Math.PI / 2);
       ctx.beginPath();
       ctx.moveTo(radius * 0.9, 0);
       ctx.lineTo(radius, 0);
@@ -91,9 +95,9 @@ export default function createClock(title: string, width: number, height: number
     ctx.restore();
     ctx.save();
 
-    for (let i = 0; i < KEDU_HOUR; i++) {
+    for (let i = 0; i < graduation.hour; i++) {
       ctx.lineWidth = 3;
-      ctx.rotate((CIRCLE / KEDU_HOUR) * i - Math.PI / 2);
+      ctx.rotate((CIRCLE / graduation.hour) * i - Math.PI / 2);
       ctx.beginPath();
       ctx.moveTo(radius * 0.7, 0);
       ctx.lineTo(radius * 0.88, 0);
