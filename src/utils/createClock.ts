@@ -1,15 +1,28 @@
-export default function createClock(width: number, height: number, radius = width / 2, defaultTimeStamp: number, onTimestampChange: (t: number) => void) {
+import { Options } from "../hooks/useExoplanetClock";
+
+const KEDU_HOUR = 24;
+const KEDU_MINUTE = 90;
+
+function fullZero(v: number) {
+  return `${v}`.padStart(2, "0");
+}
+export default function createClock(title: string, width: number, height: number, radius: number) {
   const CIRCLE = 2 * Math.PI;
   const canvas = document.createElement("canvas");
   canvas.width = width;
   canvas.height = height;
   const ctx = canvas.getContext("2d")!;
-  let _timestamp = defaultTimeStamp || 0;
-  function draw(delay: number) {
-    console.log(delay);
+  function draw(timeInfo: Required<Options>) {
     ctx.save();
     ctx.clearRect(0, 0, width, height);
-    ctx.translate(width / 2, height / 2);
+    ctx.font = "20px sans-serif";
+    ctx.fillText(title, radius * 2 + 50, height / 2 - 30);
+
+    ctx.font = "18px sans-serif";
+    ctx.fillText(`${timeInfo.year} 年 ${fullZero(timeInfo.month)} 月 ${fullZero(timeInfo.day)} 日`, radius * 2 + 50, height / 2 - 0);
+    ctx.font = "14px sans-serif";
+    ctx.fillText(`${fullZero(timeInfo.hour)} : ${fullZero(timeInfo.minute)} : ${fullZero(timeInfo.second)}`, radius * 2 + 50, height / 2 + 20);
+    ctx.translate(radius, height / 2);
     ctx.save();
 
     // 外圆
@@ -21,75 +34,79 @@ export default function createClock(width: number, height: number, radius = widt
     // 中心点
     ctx.beginPath();
     ctx.arc(0, 0, 5, 0, Math.PI * 2);
-    ctx.stroke();
+    ctx.fill();
     ctx.closePath();
 
-    const time = new Date();
-    const hour = time.getHours() % 12;
-    const minutes = time.getMinutes();
-    const seconds = time.getSeconds();
+    const hour = timeInfo.hour % KEDU_HOUR;
+    const minutes = timeInfo.minute;
+    const seconds = timeInfo.second;
 
-    ctx.rotate((CIRCLE / 12) * hour + (CIRCLE / 12) * (minutes / 60) - Math.PI / 2);
+    // 时针
+    ctx.rotate((CIRCLE / KEDU_HOUR) * hour + (CIRCLE / KEDU_HOUR) * (minutes / KEDU_MINUTE) - Math.PI / 2);
 
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(40, 0);
-    ctx.lineWidth = 10;
+    ctx.lineTo(radius * 0.4, 0);
+    ctx.lineWidth = 3;
     ctx.stroke();
     ctx.closePath();
     ctx.restore();
     ctx.save();
 
-    ctx.rotate((CIRCLE / 60) * minutes + (CIRCLE / 60) * (seconds / 60) - Math.PI / 2);
+    // 分针
+    ctx.rotate((CIRCLE / KEDU_MINUTE) * minutes + (CIRCLE / KEDU_MINUTE) * (seconds / KEDU_MINUTE) - Math.PI / 2);
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(60, 0);
+    ctx.lineTo(radius * 0.6, 0);
     ctx.strokeStyle = "blue";
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.stroke();
     ctx.closePath();
     ctx.restore();
     ctx.save();
 
-    ctx.rotate((CIRCLE / 60) * seconds - Math.PI / 2);
+    // 秒针
+    ctx.rotate((CIRCLE / KEDU_MINUTE) * seconds - Math.PI / 2);
     ctx.beginPath();
     ctx.moveTo(-10, 0);
-    ctx.lineTo(80, 0);
+    ctx.lineTo(radius * 0.8, 0);
     ctx.strokeStyle = "red";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = 1;
     ctx.stroke();
     ctx.closePath();
     ctx.restore();
     ctx.save();
 
     ctx.lineWidth = 1;
-    for (let i = 0; i < 60; i++) {
-      ctx.rotate((2 * Math.PI) / 60);
+    for (let i = 0; i < KEDU_MINUTE; i++) {
+      ctx.rotate((CIRCLE / KEDU_MINUTE) * i - Math.PI / 2);
       ctx.beginPath();
-      ctx.moveTo(90, 0);
-      ctx.lineTo(100, 0);
+      ctx.moveTo(radius * 0.9, 0);
+      ctx.lineTo(radius, 0);
       ctx.stroke();
       ctx.closePath();
+      ctx.restore();
+      ctx.save();
     }
     ctx.restore();
     ctx.save();
 
-    ctx.lineWidth = 4;
-    for (let i = 0; i < 12; i++) {
-      ctx.rotate((2 * Math.PI) / 12);
+    for (let i = 0; i < KEDU_HOUR; i++) {
+      ctx.lineWidth = 3;
+      ctx.rotate((CIRCLE / KEDU_HOUR) * i - Math.PI / 2);
       ctx.beginPath();
-      ctx.moveTo(80, 0);
-      ctx.lineTo(100, 0);
+      ctx.moveTo(radius * 0.7, 0);
+      ctx.lineTo(radius * 0.88, 0);
       ctx.stroke();
       ctx.closePath();
+      ctx.restore();
+      ctx.save();
     }
     ctx.restore();
     ctx.restore();
-    onTimestampChange((_timestamp = _timestamp + delay));
-    setTimeout(draw, delay, delay);
   }
   return {
     el: canvas,
-    run: (delay: number) => draw(delay),
+    run: draw,
   };
 }

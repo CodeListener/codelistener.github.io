@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import useExoplanetClock from "./hooks/useExoplanetClock";
-const clock = useExoplanetClock({ year: 2804, month: 18, day: 31, hour: 2, minute: 2, second: 88 });
-clock.renderClock(200, 200);
+const clock = useExoplanetClock({ year: 2804, month: 18, day: 38, hour: 11, minute: 88, second: 5 });
+clock.renderClock(400, 200, 90);
 </script>
 
-<template></template>
+<template>
+</template>
 
 <style scoped>
 .logo {
