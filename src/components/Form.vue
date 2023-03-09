@@ -11,6 +11,7 @@
 </template>
 <script setup lang="ts">
 import { reactive, computed } from "vue";
+import { dateToString } from "../utils";
 import { ExoplaneSetting } from "../utils/planet";
 import Input from "./Input.vue";
 
@@ -23,9 +24,8 @@ const maxDay = computed(() => {
 });
 
 function validate(date: DateTimeData) {
-  const { year, month, day, hour, minute, second } = ExoplaneSetting.baseStartDate;
   if (ExoplaneSetting.getTimestamp(ExoplaneSetting.baseStartDate) > ExoplaneSetting.getTimestamp(date)) {
-    return `当前外星钟时间不可小于： ${year}-${month}-${day} ${hour}:${minute}:${second}`;
+    return `当前外星钟时间不可小于： ${dateToString(ExoplaneSetting.baseStartDate)}`;
   }
 }
 

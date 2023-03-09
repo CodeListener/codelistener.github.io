@@ -41,7 +41,6 @@ function convertTimeWidthEarth(date: DateTimeData) {
 
   const delta = curTimestamp - baseTimestamp;
   if (delta < 0) {
-    console.log("小于范围");
     // 小于起始时间直接返回地球起始时间
     return earthBaseTime;
   }
@@ -88,7 +87,6 @@ function onSubmit() {
 onMounted(() => {
   earthClockControl.value = earthClock.renderClock(400, 200, 90, "#earth");
   exoplanetClockControl.value = exoplanetClock.renderClock(400, 200, 90, "#exoplane", (notice) => {
-    console.log("闹钟提示", notice);
     alert(`时间到: ${dateToString(notice[0])}`);
   });
   exoplaneToEarthClockControl.value = exoplaneToEarthClock.renderClock(400, 200, 90, "#exoplane-earth");
