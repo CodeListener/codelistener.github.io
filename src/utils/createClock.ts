@@ -19,10 +19,10 @@ export default function createClock(title: string, width: number, height: number
   function draw(timeInfo: Options) {
     ctx.save();
     ctx.clearRect(0, 0, width, height);
-    ctx.font = "20px sans-serif";
+    ctx.font = "18px sans-serif";
     ctx.fillText(title, radius * 2 + 50, height / 2 - 30);
 
-    ctx.font = "18px sans-serif";
+    ctx.font = "16px sans-serif";
     ctx.fillText(`${timeInfo.year} 年 ${fullZero(timeInfo.month)} 月 ${fullZero(timeInfo.day)} 日`, radius * 2 + 50, height / 2 - 0);
     ctx.font = "14px sans-serif";
     ctx.fillText(`${fullZero(timeInfo.hour)} : ${fullZero(timeInfo.minute)} : ${fullZero(timeInfo.second)}`, radius * 2 + 50, height / 2 + 20);

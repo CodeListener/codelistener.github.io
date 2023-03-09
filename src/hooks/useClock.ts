@@ -1,17 +1,11 @@
-import { computed, reactive, toRaw } from "vue";
+import { reactive, toRaw } from "vue";
 import createClock from "../utils/createClock";
 import { EarthSetting } from "../utils/planet";
 type Options = {
   title?: string;
-  year?: number;
-  month?: number;
-  day?: number;
-  hour?: number;
-  minute?: number;
-  second?: number;
   graduation?: Graduation;
   setting?: ClockSetting;
-};
+} & Partial<DateTimeData>;
 
 const currentDate = new Date();
 const DEFAULT_OPTIONS: Options = {
@@ -29,66 +23,79 @@ const DEFAULT_OPTIONS: Options = {
   },
 };
 export default function useExoplanetClock(options?: Options) {
-  const clockInfo = reactive(Object.assign({}, DEFAULT_OPTIONS, options) as Required<Options>);
+  const clockInfo = reactive({ ...DEFAULT_OPTIONS, ...options } as Required<Options>);
+  let clockControl: ClockControl;
 
-  
-  // // 相对地球的时间
-  // const relativeEarthTimeStamp = computed(() => {
-  //   return currentExoplanetTimestamp.value * 0.5 * 1000;
-  // });
-  // // 与地球的时间戳差值
-  // const timeDifferenceWithTheEarth = computed(() => {
-  //   const result = Math.abs(relativeEarthTimeStamp.value - new Date("1970-01-01 12:00:00").getTime());
-  //   console.warn("相对地球时间：", new Date(relativeEarthTimeStamp.value));
-  //   console.warn("和地球时间戳相差数： ", result);
-  //   return result;
-  // });
-
-  function refreshTime(cb: Function) {
-    let { month, second } = clockInfo;
-    const setting = clockInfo.setting!;
-    second += 1;
-    if (second >= setting.SECONDS) {
-      clockInfo.second = 0;
-      clockInfo.minute++;
-    } else {
-      clockInfo.second = second;
-    }
-    if (clockInfo.minute >= setting.MINUTES) {
-      clockInfo.minute = 0;
-      clockInfo.hour++;
-    }
-    if (clockInfo.hour >= setting.HOURS) {
-      clockInfo.hour = 0;
-      clockInfo.day++;
-    }
-    if (clockInfo.day > setting.MONTH_ITEMS[month - 1]) {
-      clockInfo.day = 1;
-      clockInfo.month++;
-    }
-    if (clockInfo.month > setting.MONTH_ITEMS.length) {
-      clockInfo.month = 1;
-      clockInfo.year++;
-    }
-    cb();
-    setTimeout(() => {
-      refreshTime(cb);
-    }, setting.DURATION);
+  function bindClockElement(renderFn: Function) {
+    let timer: number | null = 0;
+    const control: ClockControl = {
+      isStop: true,
+      stop() {
+        timer && clearTimeout(timer);
+        this.isStop = true;
+        timer = null;
+      },
+      run() {
+        this.isStop = false;
+        let { month, second } = clockInfo;
+        const setting = clockInfo.setting;
+        second += 1;
+        if (second >= setting.seconds) {
+          clockInfo.second = 0;
+          clockInfo.minute++;
+        } else {
+          clockInfo.second = second;
+        }
+        if (clockInfo.minute >= setting.minutes) {
+          clockInfo.minute = 0;
+          clockInfo.hour++;
+        }
+        if (clockInfo.hour >= setting.hours) {
+          clockInfo.hour = 0;
+          clockInfo.day++;
+        }
+        if (clockInfo.day > setting.monthItems[month - 1]) {
+          clockInfo.day = 1;
+          clockInfo.month++;
+        }
+        if (clockInfo.month > setting.monthItems.length) {
+          clockInfo.month = 1;
+          clockInfo.year++;
+        }
+        renderFn();
+        timer = setTimeout(() => {
+          this.run();
+        }, setting.duration);
+      },
+      getDateTime() {
+        return clockInfo;
+      },
+      setDateTime(data) {
+        Object.assign(clockInfo, data);
+        renderFn();
+        this.stop();
+        timer = setTimeout(() => {
+          this.run();
+        }, clockInfo.setting.duration);
+      },
+    };
+    return control;
   }
 
-  function renderClock(width: number, height: number, radius: number = width / 2) {
+  function renderClock(width: number, height: number, radius: number, mount?: string, timedCallback?: (date: DateTimeData) => void) {
     const { el, run } = createClock(clockInfo.title, width, height, radius, { hour: clockInfo.graduation.hour, minute: clockInfo.graduation.minute });
-    document.body.appendChild(el);
-    run(toRaw(clockInfo));
-    refreshTime(() => {
+    mount ? document.querySelector(mount)?.appendChild(el) : document.body.appendChild(el);
+    const render = () => {
       run(toRaw(clockInfo));
-    });
+      timedCallback?.(clockInfo);
+    };
+    render();
+    clockControl = bindClockElement(render);
+    clockControl.run();
+    return clockControl;
   }
 
   return {
-    // timeDifferenceWithTheEarth,
-    // relativeEarthTimeStamp,
     renderClock,
-    clockInfo,
   };
 }

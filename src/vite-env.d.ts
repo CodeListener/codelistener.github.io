@@ -6,11 +6,35 @@ type Graduation = {
 };
 
 type ClockSetting = {
-  SECONDS: number;
-  MINUTES: number;
-  HOURS: number;
-  MONTH_ITEMS: number[];
-  ONE_DAY_SECONDS: number;
-  ONE_YEAR_SECONDS: number;
-  DURATION: number;
+  seconds: number;
+  minutes: number;
+  hours: number;
+  monthItems: number[];
+  oneHourSeconds: number;
+  oneDaySeconds: number;
+  oneYearSeconds: number;
+  duration: number;
+  getTimestamp: (d: DateTimeData) => number;
+};
+
+type DateTimeData = {
+  year: number;
+  month: number;
+  day: number;
+  hour: number;
+  minute: number;
+  second: number;
+};
+
+type Notice = {
+  date: DateTimeData;
+  content: string;
+  isShow?: boolean;
+};
+type ClockControl = {
+  run: () => void;
+  stop: () => void;
+  setDateTime: (data: Partial<DateTimeData>) => void;
+  getDateTime: () => DateTimeData;
+  isStop: boolean;
 };
