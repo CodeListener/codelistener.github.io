@@ -1,4 +1,4 @@
-import { reactive, toRaw } from "vue";
+import { reactive, toRaw, ref } from "vue";
 import createClock from "../utils/createClock";
 import { EarthSetting } from "../utils/planet";
 type Options = {
@@ -25,8 +25,10 @@ const DEFAULT_OPTIONS: Options = {
 export default function useExoplanetClock(options?: Options) {
   const clockInfo = reactive({ ...DEFAULT_OPTIONS, ...options } as Required<Options>);
   let clockControl: ClockControl;
+  const notices = ref<Notice[]>([]);
 
-  function bindClockElement(renderFn: Function) {
+  // 绑定时钟元素
+  function bindClockElement(renderFn: Function, onNotice?: (ns: Notice[]) => void) {
     let timer: number | null = 0;
     const control: ClockControl = {
       isStop: true,
@@ -63,6 +65,21 @@ export default function useExoplanetClock(options?: Options) {
           clockInfo.year++;
         }
         renderFn();
+        const needNotice: Notice[] = [];
+        const _notices: Notice[] = [];
+        notices.value.forEach((item) => {
+          if (setting.getTimestamp(item) <= setting.getTimestamp(clockInfo)) {
+            needNotice.push(item);
+          } else {
+            _notices.push(item);
+          }
+        });
+        if (needNotice.length > 0) {
+          // 发出事件
+          onNotice?.(needNotice);
+        }
+        notices.value = _notices;
+
         timer = setTimeout(() => {
           this.run();
         }, setting.duration);
@@ -78,24 +95,27 @@ export default function useExoplanetClock(options?: Options) {
           this.run();
         }, clockInfo.setting.duration);
       },
+      addNotice(n) {
+        notices.value.push(n);
+      },
     };
     return control;
   }
 
-  function renderClock(width: number, height: number, radius: number, mount?: string, timedCallback?: (date: DateTimeData) => void) {
+  function renderClock(width: number, height: number, radius: number, mount?: string, onNotice?: (ns: Notice[]) => void) {
     const { el, run } = createClock(clockInfo.title, width, height, radius, { hour: clockInfo.graduation.hour, minute: clockInfo.graduation.minute });
     mount ? document.querySelector(mount)?.appendChild(el) : document.body.appendChild(el);
     const render = () => {
       run(toRaw(clockInfo));
-      timedCallback?.(clockInfo);
     };
     render();
-    clockControl = bindClockElement(render);
+    clockControl = bindClockElement(render, onNotice);
     clockControl.run();
     return clockControl;
   }
 
   return {
     renderClock,
+    notices,
   };
 }

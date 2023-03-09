@@ -16,6 +16,14 @@ function getExoplaneTiemstamp(date: DateTimeData) {
 }
 
 export const EarthSetting: ClockSetting = {
+  baseStartDate: {
+    year: 1970,
+    month: 1,
+    day: 1,
+    hour: 12,
+    minute: 0,
+    second: 0,
+  },
   seconds: 60,
   minutes: 60,
   hours: 24,
@@ -44,6 +52,14 @@ export const EarthSetting: ClockSetting = {
 };
 
 export const ExoplaneSetting: ClockSetting = {
+  baseStartDate: {
+    year: 2804,
+    month: 18,
+    day: 31,
+    hour: 2,
+    minute: 2,
+    second: 88,
+  },
   // 1分钟90秒
   seconds: 90,
   // 1小时90分钟

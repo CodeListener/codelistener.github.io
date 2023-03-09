@@ -6,6 +6,7 @@ type Graduation = {
 };
 
 type ClockSetting = {
+  baseStartDate: DateTimeData;
   seconds: number;
   minutes: number;
   hours: number;
@@ -26,15 +27,13 @@ type DateTimeData = {
   second: number;
 };
 
-type Notice = {
-  date: DateTimeData;
-  content: string;
-  isShow?: boolean;
-};
+type Notice = DateTimeData;
+
 type ClockControl = {
   run: () => void;
   stop: () => void;
   setDateTime: (data: Partial<DateTimeData>) => void;
   getDateTime: () => DateTimeData;
   isStop: boolean;
+  addNotice(n: Notice): void;
 };

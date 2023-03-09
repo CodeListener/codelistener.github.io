@@ -2,29 +2,35 @@
 import { onMounted, ref } from "vue";
 import useClock from "./hooks/useClock";
 import { ExoplaneSetting } from "./utils/planet";
-import DatePicker from "./components/DatePicker.vue";
+import { dateToString } from "./utils";
+import Form from "./components/Form.vue";
+import Modal from "./components/Modal.vue";
+import Button from "./components/Button.vue";
 
 const earthClockControl = ref<ClockControl>();
 const exoplanetClockControl = ref<ClockControl>();
-const exoplaneConvertWidthEarthClockControl = ref<ClockControl>();
+const exoplaneToEarthClockControl = ref<ClockControl>();
 
+// 地球时钟
 const earthClock = useClock();
+// 外星钟
 const exoplanetClock = useClock({
   title: "外星钟",
-  year: 2804,
-  month: 18,
-  day: 31,
-  hour: 2,
-  minute: 2,
-  second: 88,
   setting: ExoplaneSetting,
+  // 时钟刻度
   graduation: {
     hour: 18,
     minute: 90,
   },
+  ...ExoplaneSetting.baseStartDate,
 });
-const exoplaneConvertWidthEarthClock = useClock({ title: "外星钟 -> 地球时间" });
+// 外星同步到地球钟
+const exoplaneToEarthClock = useClock({ title: "外星钟 -> 地球时间" });
 
+const modalVisible = ref(false);
+
+const form = ref<InstanceType<typeof Form>>();
+const noticeForm = ref<InstanceType<typeof Form>>();
 // 转成地球时间
 function convertTimeWidthEarth(date: DateTimeData) {
   const exoplaneBaseTime = { year: 2804, month: 18, day: 31, hour: 2, minute: 2, second: 88 };
@@ -56,39 +62,103 @@ function convertTimeWidthEarth(date: DateTimeData) {
   };
 }
 
+function onOk() {
+  noticeForm.value?.submit((errMsg, date) => {
+    if (errMsg) {
+      alert(errMsg);
+      return;
+    }
+    exoplanetClockControl.value!.addNotice(date);
+  });
+}
+function showModal() {
+  modalVisible.value = true;
+}
+function onSubmit() {
+  form.value?.submit((errMsg, date) => {
+    if (errMsg) {
+      alert(errMsg);
+      return;
+    }
+    exoplanetClockControl.value?.setDateTime(date);
+    // 同步到【外星钟->地球】时间
+    exoplaneToEarthClockControl.value!.setDateTime(convertTimeWidthEarth(date));
+  });
+}
 onMounted(() => {
   earthClockControl.value = earthClock.renderClock(400, 200, 90, "#earth");
-  exoplanetClockControl.value = exoplanetClock.renderClock(400, 200, 90, "#exoplane", () => {});
-  exoplaneConvertWidthEarthClockControl.value = exoplaneConvertWidthEarthClock.renderClock(400, 200, 90, "#exoplane-earth");
+  exoplanetClockControl.value = exoplanetClock.renderClock(400, 200, 90, "#exoplane", (notice) => {
+    console.log("闹钟提示", notice);
+    alert(`时间到: ${dateToString(notice[0])}`);
+  });
+  exoplaneToEarthClockControl.value = exoplaneToEarthClock.renderClock(400, 200, 90, "#exoplane-earth");
   // 同步到【外星钟->地球】时间
-  exoplaneConvertWidthEarthClockControl.value.setDateTime(convertTimeWidthEarth(exoplanetClockControl.value.getDateTime()));
+  exoplaneToEarthClockControl.value.setDateTime(convertTimeWidthEarth(exoplanetClockControl.value.getDateTime()));
 });
-
-const changeTime = (res: DateTimeData) => {
-  exoplanetClockControl.value?.setDateTime(res);
-  // 同步到【外星钟->地球】时间
-  exoplaneConvertWidthEarthClockControl.value!.setDateTime(convertTimeWidthEarth(res));
-};
 </script>
 
 <template>
-  <DatePicker @confirm="changeTime" />
-  <div class="clocks">
-    <div id="exoplane"></div>
-    <div id="exoplane-earth"></div>
-    <div id="earth"></div>
+  <div class="main">
+    <div class="clocks">
+      <div class="clocks">
+        <div id="exoplane"></div>
+        <div id="exoplane-earth"></div>
+        <div id="earth"></div>
+      </div>
+    </div>
+    <div class="form">
+      <ul v-if="exoplanetClock.notices.value.length">
+        <li v-for="(notice, index) in exoplanetClock.notices.value">闹钟-{{ index + 1 }} {{ dateToString(notice) }}</li>
+      </ul>
+      <h3>外星钟时钟设置</h3>
+      <Form ref="form">
+        <div class="btns">
+          <Button type="primary" class="submit" @click="onSubmit">确认</Button>
+          <Button class="set-notice" @click="showModal">设置闹钟</Button>
+        </div>
+      </Form>
+    </div>
   </div>
+  <Modal v-model:visible="modalVisible" @on-ok="onOk">
+    <Form ref="noticeForm" />
+  </Modal>
 </template>
 
-<style>
+<style lang="less">
+.main {
+  display: flex;
+  justify-content: space-between;
+  .clocks {
+    margin-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 20px;
+  }
+  .form {
+    background-color: #efefef;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 20px;
+  }
+  .btns {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: nowrap;
+    .btn {
+      flex: 1;
+    }
+    .btn + .btn {
+      margin-left: 10px;
+    }
+  }
+}
+
 canvas {
   max-width: 300px;
   width: 100%;
-}
-.clocks {
-  margin-top: 30px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
 }
 </style>

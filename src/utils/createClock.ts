@@ -1,6 +1,4 @@
-function fullZero(v: number) {
-  return `${v}`.padStart(2, "0");
-}
+import { fullZero } from ".";
 
 type Options = {
   year: number;
